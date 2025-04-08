@@ -94,7 +94,24 @@ void Game::loadResources() {
         cerr << "Failed to load background music! Mix_Error: " << Mix_GetError() << endl;
     }
     loadHighScore();
+}
 
+void Game::loadHighScore() {
+    ifstream file("highscore.txt");
+    if (file.is_open()) {
+        file >> highScore;
+        file.close();
+    } else {
+        highScore = 0;
+    }
+}
+
+void Game::saveHighScore() {
+    ofstream file("highscore.txt");
+    if (file.is_open()) {
+        file << highScore;
+        file.close();
+    }
 }
 
 void Game::initializeGrid() {
@@ -174,7 +191,7 @@ void Game::updateGameState() {
         flipBackTime = 0;
     }
 
-    Uint32 elapsedTime = SDL_GetTicks() - startTime;
+    int elapsedTime = SDL_GetTicks() - startTime;
     if (elapsedTime >= GAME_DURATION) {
         gameState = GAME_OVER_LOSE;
         stopBackgroundMusic();
@@ -370,23 +387,6 @@ void Game::stopBackgroundMusic() {
     Mix_HaltMusic();
 }
 
-void Game::loadHighScore() {
-    ifstream file("highscore.txt");
-    if (file.is_open()) {
-        file >> highScore;
-        file.close();
-    } else {
-        highScore = 0;
-    }
-}
-
-void Game::saveHighScore() {
-    ofstream file("highscore.txt");
-    if (file.is_open()) {
-        file << highScore;
-        file.close();
-    }
-}
 
 
 void Game::closeSDL() {

@@ -1,12 +1,12 @@
 # depslib dependency file v1.0
-1744117223 source:c:\game_project\game.cpp
+1744118934 source:c:\game_project\game.cpp
 	<fstream>
 	"Game.h"
 	<algorithm>
 	<random>
 	<iostream>
 
-1744117060 c:\game_project\game.h
+1744119037 c:\game_project\game.h
 	<SDL.h>
 	<SDL_image.h>
 	<SDL_mixer.h>

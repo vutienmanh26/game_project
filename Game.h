@@ -50,8 +50,8 @@ private:
     GameState gameState;
     int flipCount;
     int score;
-    Uint32 startTime;
-    Uint32 flipBackTime;
+    int startTime;
+    int flipBackTime;
     int highScore;
 
 
