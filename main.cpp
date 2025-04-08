@@ -40,12 +40,13 @@ int main(int argc, char* argv[]) {
                 break;
             case GAME_OVER_WIN:
                 game.renderResult(true);
+                game.renderHighScore();
                 break;
             case GAME_OVER_LOSE:
                 game.renderResult(false);
+                game.renderHighScore();
                 break;
         }
-
 
         SDL_RenderPresent(game.getRenderer());
 

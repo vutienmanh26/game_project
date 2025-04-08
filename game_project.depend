@@ -1,0 +1,23 @@
+# depslib dependency file v1.0
+1744111766 source:c:\game_project\game.cpp
+	<fstream>
+	"Game.h"
+	<algorithm>
+	<random>
+	<iostream>
+
+1744111307 c:\game_project\game.h
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+	<vector>
+	<map>
+	<string>
+	<SDL_ttf.h>
+	<fstream>
+
+1744110963 source:c:\game_project\main.cpp
+	"Game.h"
+	<SDL.h>
+	<iostream>
+

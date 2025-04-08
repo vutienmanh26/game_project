@@ -1,4 +1,4 @@
-
+#include <fstream>
 #include "Game.h"
 #include <algorithm>
 #include <random>
@@ -17,6 +17,7 @@ Game::Game() :
     flipCount(0),
     gameState(MENU),
     score(0),
+    highScore(0),
     startTime(0),
     flipBackTime(0),
     firstClick(-1, -1),
@@ -90,6 +91,8 @@ void Game::loadResources() {
     if (!backgroundMusic) {
         std::cerr << "Failed to load background music! Mix_Error: " << Mix_GetError() << std::endl;
     }
+    loadHighScore();
+
 }
 
 void Game::initializeGrid() {
@@ -148,13 +151,91 @@ void Game::handleMouseClick(int x, int y) {
                 matched[secondClick.first][secondClick.second] = true;
                 firstClick = {-1, -1};
                 secondClick = {-1, -1};
-                score += 10;
+                score += 15;
             } else {
                 flipBackTime = SDL_GetTicks() + FLIP_DELAY;
                 score = std::max(0, score - 5);
             }
         }
         flipCount++;
+    }
+}
+
+void Game::updateGameState() {
+    if (gameState != PLAYING) return;
+
+    if (flipBackTime > 0 && SDL_GetTicks() >= flipBackTime) {
+        revealed[firstClick.first][firstClick.second] = false;
+        revealed[secondClick.first][secondClick.second] = false;
+        firstClick = {-1, -1};
+        secondClick = {-1, -1};
+        flipBackTime = 0;
+    }
+
+    Uint32 elapsedTime = SDL_GetTicks() - startTime;
+    if (elapsedTime >= GAME_DURATION) {
+        gameState = GAME_OVER_LOSE;
+        stopBackgroundMusic();
+        return;
+    }
+
+    bool allMatched = true;
+    for (const auto& row : matched) {
+        for (bool cell : row) {
+            if (!cell) {
+                allMatched = false;
+                break;
+            }
+        }
+    }
+    if (allMatched) {
+        gameState = GAME_OVER_WIN;
+        if (score > highScore) {
+            highScore = score;
+            saveHighScore();
+        }
+        stopBackgroundMusic();
+    }
+}
+
+bool Game::checkRestartButtonClick(int x, int y) {
+    SDL_Rect buttonRect = {SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 + 100, 200, 80};
+    return (x >= buttonRect.x && x <= buttonRect.x + buttonRect.w &&
+            y >= buttonRect.y && y <= buttonRect.y + buttonRect.h);
+}
+
+void Game::renderMenu() {
+    if (menuTexture) {
+        SDL_Rect destRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+        SDL_RenderCopy(renderer, menuTexture, nullptr, &destRect);
+    }
+
+    SDL_Rect startButton = {150, 450, 200, 80};
+    if (startButtonTexture) {
+        SDL_RenderCopy(renderer, startButtonTexture, nullptr, &startButton);
+    }
+}
+
+void Game::renderGrid() {
+    for (int i = 0; i < GRID_ROWS; ++i) {
+        for (int j = 0; j < GRID_COLS; ++j) {
+            SDL_Rect rect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
+            if (revealed[i][j] || matched[i][j]) {
+                SDL_Texture* tileTexture = textures[grid[i][j]];
+                if (tileTexture) {
+                    SDL_RenderCopy(renderer, tileTexture, nullptr, &rect);
+                }
+            } else {
+                if (backTexture) {
+                    SDL_RenderCopy(renderer, backTexture, nullptr, &rect);
+                } else {
+                    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+                    SDL_RenderFillRect(renderer, &rect);
+                }
+            }
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderDrawRect(renderer, &rect);
+        }
     }
 }
 
@@ -202,77 +283,22 @@ void Game::renderScore() {
     TTF_CloseFont(font);
 }
 
-void Game::updateGameState() {
-    if (gameState != PLAYING) return;
 
-    if (flipBackTime > 0 && SDL_GetTicks() >= flipBackTime) {
-        revealed[firstClick.first][firstClick.second] = false;
-        revealed[secondClick.first][secondClick.second] = false;
-        firstClick = {-1, -1};
-        secondClick = {-1, -1};
-        flipBackTime = 0;
-    }
+void Game::renderHighScore() {
+    TTF_Font* font = TTF_OpenFont("boldItalic.ttf", 24);
+    if (!font) return;
 
-    Uint32 elapsedTime = SDL_GetTicks() - startTime;
-    if (elapsedTime >= GAME_DURATION) {
-        gameState = GAME_OVER_LOSE;
-        stopBackgroundMusic();
-        return;
-    }
+    std::string highScoreText = "High Score: " + std::to_string(highScore);
+    SDL_Color color = {255, 255, 255, 255};
+    SDL_Surface* surface = TTF_RenderText_Solid(font, highScoreText.c_str(), color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
 
-    bool allMatched = true;
-    for (const auto& row : matched) {
-        for (bool cell : row) {
-            if (!cell) {
-                allMatched = false;
-                break;
-            }
-        }
-    }
-    if (allMatched) {
-        gameState = GAME_OVER_WIN;
-        stopBackgroundMusic();
-    }
-}
+    SDL_Rect rect = {SCREEN_WIDTH / 2 - surface->w / 2,SCREEN_HEIGHT / 2 + 50,surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, nullptr, &rect);
 
-void Game::renderGrid() {
-    for (int i = 0; i < GRID_ROWS; ++i) {
-        for (int j = 0; j < GRID_COLS; ++j) {
-            SDL_Rect rect = {j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE};
-            if (revealed[i][j] || matched[i][j]) {
-                SDL_Texture* tileTexture = textures[grid[i][j]];
-                if (tileTexture) {
-                    SDL_RenderCopy(renderer, tileTexture, nullptr, &rect);
-                }
-            } else {
-                if (backTexture) {
-                    SDL_RenderCopy(renderer, backTexture, nullptr, &rect);
-                } else {
-                    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
-                    SDL_RenderFillRect(renderer, &rect);
-                }
-            }
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderDrawRect(renderer, &rect);
-        }
-    }
-}
-
-void Game::renderMenu() {
-    if (menuTexture) {
-        SDL_Rect destRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-        SDL_RenderCopy(renderer, menuTexture, nullptr, &destRect);
-    }
-
-    SDL_Rect startButton = {150, 450, 200, 80};
-    if (startButtonTexture) {
-        SDL_RenderCopy(renderer, startButtonTexture, nullptr, &startButton);
-    } else {
-        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        SDL_RenderFillRect(renderer, &startButton);
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderDrawRect(renderer, &startButton);
-    }
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+    TTF_CloseFont(font);
 }
 
 void Game::renderRestartButton() {
@@ -280,36 +306,10 @@ void Game::renderRestartButton() {
 
     if (restartButtonTexture) {
         SDL_RenderCopy(renderer, restartButtonTexture, nullptr, &buttonRect);
-    } else {
-        SDL_SetRenderDrawColor(renderer, 0, 200, 0, 255);
-        SDL_RenderFillRect(renderer, &buttonRect);
-
-        TTF_Font* font = TTF_OpenFont("boldItalic.ttf", 24);
-        if (font) {
-            SDL_Color color = {0, 0, 0, 255};
-            SDL_Surface* surface = TTF_RenderText_Solid(font, "Restart", color);
-            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-            SDL_Rect textRect = {
-                buttonRect.x + (buttonRect.w - surface->w)/2,
-                buttonRect.y + (buttonRect.h - surface->h)/2,
-                surface->w,
-                surface->h
-            };
-            SDL_RenderCopy(renderer, texture, nullptr, &textRect);
-
-            SDL_FreeSurface(surface);
-            SDL_DestroyTexture(texture);
-            TTF_CloseFont(font);
-        }
     }
 }
 
-bool Game::checkRestartButtonClick(int x, int y) {
-    SDL_Rect buttonRect = {SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 + 100, 200, 80};
-    return (x >= buttonRect.x && x <= buttonRect.x + buttonRect.w &&
-            y >= buttonRect.y && y <= buttonRect.y + buttonRect.h);
-}
+
 
 void Game::renderResult(bool isWin) {
     SDL_Texture* resultTexture = isWin ? winTexture : loseTexture;
@@ -368,6 +368,25 @@ void Game::stopBackgroundMusic() {
     Mix_HaltMusic();
 }
 
+void Game::loadHighScore() {
+    std::ifstream file("highscore.txt");
+    if (file.is_open()) {
+        file >> highScore;
+        file.close();
+    } else {
+        highScore = 0;
+    }
+}
+
+void Game::saveHighScore() {
+    std::ofstream file("highscore.txt");
+    if (file.is_open()) {
+        file << highScore;
+        file.close();
+    }
+}
+
+
 void Game::closeSDL() {
     for (auto& texturePair : textures) {
         SDL_DestroyTexture(texturePair.second);
@@ -387,4 +406,3 @@ void Game::closeSDL() {
     IMG_Quit();
     SDL_Quit();
 }
-

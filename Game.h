@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <SDL_ttf.h>
+#include <fstream>
 
 const int SCREEN_HEIGHT = 600;
 const int GRID_ROWS = 4;
@@ -50,6 +51,11 @@ private:
     Uint32 startTime;
     Uint32 flipBackTime;
 
+    int highScore;
+    void loadHighScore();
+    void saveHighScore();
+
+
     // Lưới game
     std::vector<std::vector<int>> grid;
     std::vector<std::vector<bool>> revealed;
@@ -82,6 +88,7 @@ public:
     void renderScore();
     void renderTime();
     void renderRestartButton();
+    void renderHighScore();
 
     // Âm thanh
     void playBackgroundMusic();
@@ -96,4 +103,3 @@ public:
 };
 
 #endif // GAME_H
-
