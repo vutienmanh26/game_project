@@ -2,11 +2,13 @@
 #include <SDL.h>
 #include <iostream>
 
+using namespace std;
+
 int main(int argc, char* argv[]) {
     Game game;
 
     if (!game.initSDL()) {
-        std::cerr << "Failed to initialize SDL!" << std::endl;
+        cerr << "Failed to initialize SDL!" << endl;
         return -1;
     }
     game.loadResources();

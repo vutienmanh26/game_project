@@ -10,6 +10,8 @@
 #include <SDL_ttf.h>
 #include <fstream>
 
+using namespace std;
+
 const int SCREEN_HEIGHT = 600;
 const int GRID_ROWS = 4;
 const int GRID_COLS = 4;
@@ -33,7 +35,7 @@ private:
     SDL_Renderer* renderer;
 
 
-    std::map<int, SDL_Texture*> textures;
+    map<int, SDL_Texture*> textures;
     SDL_Texture* menuTexture;
     SDL_Texture* winTexture;
     SDL_Texture* loseTexture;
@@ -54,13 +56,13 @@ private:
 
 
 
-    std::vector<std::vector<int>> grid;
-    std::vector<std::vector<bool>> revealed;
-    std::vector<std::vector<bool>> matched;
+    vector<vector<int>> grid;
+    vector<vector<bool>> revealed;
+    vector<vector<bool>> matched;
 
 
-    std::pair<int, int> firstClick;
-    std::pair<int, int> secondClick;
+    pair<int, int> firstClick;
+    pair<int, int> secondClick;
 
 public:
     Game();
@@ -93,7 +95,7 @@ public:
     void saveHighScore();
 
 
-    SDL_Texture* loadTexture(const std::string& path);
+    SDL_Texture* loadTexture(const string& path);
 
 
     GameState getGameState() const { return gameState; }

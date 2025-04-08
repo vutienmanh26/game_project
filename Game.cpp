@@ -4,6 +4,8 @@
 #include <random>
 #include <iostream>
 
+using namespace std;
+
 Game::Game() :
     window(nullptr),
     renderer(nullptr),
@@ -23,9 +25,9 @@ Game::Game() :
     firstClick(-1, -1),
     secondClick(-1, -1)
 {
-    grid.resize(GRID_ROWS, std::vector<int>(GRID_COLS, 0));
-    revealed.resize(GRID_ROWS, std::vector<bool>(GRID_COLS, false));
-    matched.resize(GRID_ROWS, std::vector<bool>(GRID_COLS, false));
+    grid.resize(GRID_ROWS,vector<int>(GRID_COLS, 0));
+    revealed.resize(GRID_ROWS,vector<bool>(GRID_COLS, false));
+    matched.resize(GRID_ROWS,vector<bool>(GRID_COLS, false));
 }
 
 Game::~Game() {
@@ -34,52 +36,52 @@ Game::~Game() {
 
 bool Game::initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() <<endl;
         return false;
     }
 
     if (TTF_Init() == -1) {
-        std::cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << std::endl;
+        cerr << "SDL_ttf could not initialize! TTF_Error: " << TTF_GetError() << endl;
         return false;
     }
 
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        std::cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << std::endl;
+        cerr << "SDL_mixer could not initialize! Mix_Error: " << Mix_GetError() << endl;
         return false;
     }
 
     window = SDL_CreateWindow("Matching Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                              SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
         return false;
     }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
-        std::cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << endl;
         return false;
     }
 
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
-        std::cerr << "SDL_image could not initialize! IMG_Error: " << IMG_GetError() << std::endl;
+        cerr << "SDL_image could not initialize! IMG_Error: " << IMG_GetError() << endl;
         return false;
     }
 
     return true;
 }
 
-SDL_Texture* Game::loadTexture(const std::string& path) {
+SDL_Texture* Game::loadTexture(const string& path) {
     SDL_Texture* texture = IMG_LoadTexture(renderer, path.c_str());
     if (!texture) {
-        std::cerr << "Failed to load texture: " << path << " SDL_Error: " << SDL_GetError() << std::endl;
+        cerr << "Failed to load texture: " << path << " SDL_Error: " << SDL_GetError() << endl;
     }
     return texture;
 }
 
 void Game::loadResources() {
     for (int i = 1; i <= 8; ++i) {
-        textures[i] = loadTexture("images" + std::to_string(i) + ".png");
+        textures[i] = loadTexture("images" + to_string(i) + ".png");
     }
     menuTexture = loadTexture("imagesmenu.png");
     winTexture = loadTexture("imageswin.png");
@@ -89,20 +91,20 @@ void Game::loadResources() {
     restartButtonTexture = loadTexture("imagesrestart_button.png");
     backgroundMusic = Mix_LoadMUS("background_music.mp3");
     if (!backgroundMusic) {
-        std::cerr << "Failed to load background music! Mix_Error: " << Mix_GetError() << std::endl;
+        cerr << "Failed to load background music! Mix_Error: " << Mix_GetError() << endl;
     }
     loadHighScore();
 
 }
 
 void Game::initializeGrid() {
-    std::vector<int> tiles;
+    vector<int> tiles;
     for (int i = 1; i <= 8; ++i) {
         tiles.push_back(i);
         tiles.push_back(i);
     }
-    std::mt19937 g(SDL_GetTicks());
-    std::shuffle(tiles.begin(), tiles.end(), g);
+    mt19937 g(SDL_GetTicks());
+    shuffle(tiles.begin(), tiles.end(), g);
 
     int index = 0;
     for (int i = 0; i < GRID_ROWS; ++i) {
@@ -154,7 +156,7 @@ void Game::handleMouseClick(int x, int y) {
                 score += 15;
             } else {
                 flipBackTime = SDL_GetTicks() + FLIP_DELAY;
-                score = std::max(0, score - 5);
+                score = max(0, score - 5);
             }
         }
         flipCount++;
@@ -251,7 +253,7 @@ void Game::renderTime() {
         color = {255, 0, 0, 255};
     }
 
-    std::string timeText = "Time: " + std::to_string(remainingTime) + "s";
+    string timeText = "Time: " + to_string(remainingTime) + "s";
     SDL_Surface* surface = TTF_RenderText_Solid(font, timeText.c_str(), color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
 
@@ -266,11 +268,11 @@ void Game::renderTime() {
 void Game::renderScore() {
     TTF_Font* font = TTF_OpenFont("boldItalic.ttf", 24);
     if (!font) {
-        std::cerr << "Failed to load font: " << TTF_GetError() << std::endl;
+        cerr << "Failed to load font: " << TTF_GetError() << endl;
         return;
     }
 
-    std::string scoreText = "Score: " + std::to_string(score);
+    string scoreText = "Score: " + to_string(score);
     SDL_Color color = {0, 0, 0, 255};
     SDL_Surface* surface = TTF_RenderText_Solid(font, scoreText.c_str(), color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -288,7 +290,7 @@ void Game::renderHighScore() {
     TTF_Font* font = TTF_OpenFont("boldItalic.ttf", 24);
     if (!font) return;
 
-    std::string highScoreText = "High Score: " + std::to_string(highScore);
+    string highScoreText = "High Score: " + to_string(highScore);
     SDL_Color color = {255, 255, 255, 255};
     SDL_Surface* surface = TTF_RenderText_Solid(font, highScoreText.c_str(), color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -322,14 +324,14 @@ void Game::renderResult(bool isWin) {
     if (font) {
         SDL_Color color = {255, 255, 255, 255};
 
-        std::string scoreText = "Score: " + std::to_string(score);
+        string scoreText = "Score: " + to_string(score);
         SDL_Surface* scoreSurface = TTF_RenderText_Solid(font, scoreText.c_str(), color);
         SDL_Texture* scoreTexture = SDL_CreateTextureFromSurface(renderer, scoreSurface);
         SDL_Rect scoreRect = {SCREEN_WIDTH/2 - scoreSurface->w/2, SCREEN_HEIGHT/2 - 50, scoreSurface->w, scoreSurface->h};
         SDL_RenderCopy(renderer, scoreTexture, nullptr, &scoreRect);
 
         if (isWin) {
-            std::string flipText = "Flips: " + std::to_string(flipCount);
+            string flipText = "Flips: " + to_string(flipCount);
             SDL_Surface* flipSurface = TTF_RenderText_Solid(font, flipText.c_str(), color);
             SDL_Texture* flipTexture = SDL_CreateTextureFromSurface(renderer, flipSurface);
             SDL_Rect flipRect = {SCREEN_WIDTH/2 - flipSurface->w/2, SCREEN_HEIGHT/2, flipSurface->w, flipSurface->h};
@@ -340,7 +342,7 @@ void Game::renderResult(bool isWin) {
         }
 
         if (!isWin) {
-            std::string timeText = "Time's up!";
+            string timeText = "Time's up!";
             SDL_Surface* timeSurface = TTF_RenderText_Solid(font, timeText.c_str(), color);
             SDL_Texture* timeTexture = SDL_CreateTextureFromSurface(renderer, timeSurface);
             SDL_Rect timeRect = {SCREEN_WIDTH/2 - timeSurface->w/2, SCREEN_HEIGHT/2, timeSurface->w, timeSurface->h};
@@ -369,7 +371,7 @@ void Game::stopBackgroundMusic() {
 }
 
 void Game::loadHighScore() {
-    std::ifstream file("highscore.txt");
+    ifstream file("highscore.txt");
     if (file.is_open()) {
         file >> highScore;
         file.close();
@@ -379,7 +381,7 @@ void Game::loadHighScore() {
 }
 
 void Game::saveHighScore() {
-    std::ofstream file("highscore.txt");
+    ofstream file("highscore.txt");
     if (file.is_open()) {
         file << highScore;
         file.close();
