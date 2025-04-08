@@ -18,7 +18,7 @@ const int GAME_DURATION = 60000;
 const int SCREEN_WIDTH = GRID_COLS * TILE_SIZE;
 const int FLIP_DELAY = 500;
 
-// Định nghĩa các trạng thái của trò chơi
+
 enum GameState {
     MENU,
     PLAYING,
@@ -50,10 +50,7 @@ private:
     int score;
     Uint32 startTime;
     Uint32 flipBackTime;
-
     int highScore;
-    void loadHighScore();
-    void saveHighScore();
 
 
 
@@ -92,6 +89,9 @@ public:
     void playBackgroundMusic();
     void stopBackgroundMusic();
 
+    void loadHighScore();
+    void saveHighScore();
+
 
     SDL_Texture* loadTexture(const std::string& path);
 
@@ -100,4 +100,4 @@ public:
     SDL_Renderer* getRenderer() const { return renderer; }
 };
 
-#endif // GAME_H
+#endif
